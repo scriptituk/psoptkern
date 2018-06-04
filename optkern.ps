@@ -1,6 +1,10 @@
 % PostScript Kerning Procedures
 % by scriptit.co.uk
 
+% constants
+/SP (\0 ) def % space
+/NL (\0\n) def % new line
+
 % analyse inner edges and reject optical outliers
 % <[left right] array> <left> <right> _koptoutliers <fenced array>
 /_koptoutliers {
@@ -9,8 +13,7 @@
 	4 2 roll pop pop
 	% find inner optical limits for the height in common
 	2 copy % l1 r2 r1 l2
-	0 1 6 index length 1 sub
-	{
+	0 1 6 index length 1 sub {
 		5 index exch get aload pop
 		dup 3 index lt { 3 -1 roll pop exch }{ pop } ifelse % l2
 		dup 3 index gt { 3 -1 roll pop exch }{ pop } ifelse % r1
@@ -26,8 +29,7 @@
 	2 copy add 2 div % right fence
 	3 1 roll exch sub 5 -1 roll mul % right outlier shift
 	% build optically fenced array
-	0 1 6 index length 1 sub
-	{
+	0 1 6 index length 1 sub {
 		5 index 1 index get aload pop
 		dup 5 index gt { 3 index sub } if exch
 		dup 7 index lt { 5 index add } if exch
@@ -45,20 +47,16 @@
 	0
 	1 index median
 	2 index 1 index mad % use median absolute deviation if nonzero
-	dup 0 eq
-	{
+	dup 0 eq {
 		pop pop
 		1 index mean
 		2 index 1 index sd % use standard deviation if zero MAD
 	} if
-	dup 0 ne
-	{
-		0 1 5 index length 1 sub
-		{
+	dup 0 ne {
+		0 1 5 index length 1 sub {
 			4 index exch get
 			dup 3 index sub abs 2 index div % abs(x - m) / d
-			2 le % within 2 MADs or SDs
-			{
+			2 le { % within 2 MADs or SDs
 				4 index 4 index 3 -1 roll put
 				3 -1 roll 1 add 3 1 roll
 			}{
@@ -94,12 +92,10 @@
 	array % [L R] pairs
 	0 % index
 	7 2 roll
-	1 exch
-	{
+	1 exch {
 		dup 3 index exch get 1 get % left char right edge
 		exch 2 index exch get 0 get % right char left edge
-		1 index type /nulltype ne 1 index type /nulltype ne and
-		{
+		1 index null ne 1 index null ne and {
 			4 index add % right + advance
 			2 copy 2 array astore % [L R] pair
 			7 index 7 index 3 -1 roll put % save in array
@@ -117,8 +113,7 @@
 	5 index
 	_koptoutliers
 	% convert to gaps
-	0 1 2 index length 1 sub
-	{
+	0 1 2 index length 1 sub {
 		dup 2 index exch get aload pop
 		exch sub 1 sub % gap
 		2 index 3 1 roll put
@@ -163,23 +158,17 @@
 	dup (top) 2 index (bbox) get 3 get ceiling cvi put
 	% trace edges
 	dup (points) 0 dict put
-	dup (bottom) get 1 2 index (top) get
-	{
+	dup (bottom) get 1 2 index (top) get {
 		2 array % left right
-		2 index (left) get 1 4 index (right) get
-		{
-			dup 3 index infill
-			{
+		2 index (left) get 1 4 index (right) get {
+			dup 3 index infill {
 				1 index 0 3 -1 roll put exit
 			} if
 			pop
 		} for % trace left side
-		dup 0 get type /nulltype ne
-		{
-			2 index (right) get -1 4 index (left) get
-			{
-				dup 3 index infill
-				{
+		dup 0 get null ne {
+			2 index (right) get -1 4 index (left) get {
+				dup 3 index infill {
 					1 index 1 3 -1 roll put exit
 				} if
 				pop
@@ -192,11 +181,9 @@
 	dup (points) get
 	1 index (top) get
 	2 index (bottom) get
-	3 -1 roll
-	{
+	3 -1 roll {
 		aload pop
-		pop type /nulltype ne
-		{
+		pop null ne {
 			dup 2 index gt { exch pop dup } if
 			dup 3 index lt { 3 -1 roll pop exch }{ pop } ifelse
 		}{
@@ -208,11 +195,9 @@
 	% trim left & right
 	dup (points) get
 	dup 2 index (bottom) get get aload pop % any pair
-	3 -1 roll
-	{
+	3 -1 roll {
 		exch pop aload pop
-		dup type /nulltype ne
-		{
+		dup null ne {
 			dup 3 index gt { 3 -1 roll pop exch }{ pop } ifelse
 			dup 3 index lt { 3 -1 roll pop exch }{ pop } ifelse
 		}{
@@ -223,36 +208,17 @@
 	1 index (left) 3 -1 roll put
 } bind def
 
-% get valid dict key for arbitrary string
-% <string> _kkey <key>
-/_kkey {
-	dup length dup add 1 add string
-	dup 0 (k) putinterval
-	exch 1 exch
-	{
-		3 copy 3 copy
-		16 idiv 16 1 string cvrs putinterval
-		exch 1 add exch 15 and 16 1 string cvrs putinterval
-		pop
-		2 add
-	} forall
-	pop
-} bind def
-
 % gather kerning data for string
 % <char array> _kdata <pairs data dict>
 /_kdata {
 	0 dict % pair data
 	0 dict % char data
 	3 -1 roll utf16chars
-	[ exch { dup NL eq { pop SP } if } forall ] % newlines to spaces
-	dup
-	{
-		dup SP ne
-		{
-			dup _kkey % key
-			dup 4 index exch known not % not done
-			{
+	[ exch { dup //NL eq { pop //SP } if } forall ] % newlines to spaces
+	dup {
+		dup //SP ne {
+			dup hash % key
+			dup 4 index exch known not { % not done
 				exch _kglyph
 				3 index 3 1 roll put
 			}{
@@ -263,31 +229,26 @@
 		} ifelse
 	} forall % each char
 	utf16string
-	SP split % words
-	{
+	//SP split { % words
 		utf16chars % word
 		dup length 1 sub % limit
 		exch
-		0 1 3 index
-		{
-			dup 3 index lt % at least 2 chars left
-			{
+		0 1 3 index {
+			dup 3 index lt { % at least 2 chars left
 				1 index exch 2 getinterval % pair
-				aload 3 1 roll cat _kkey % key
-				dup 6 index exch known not % not done
-				{
+				aload 3 1 roll cat hash % key
+				dup 6 index exch known not { % not done
 					exch
 					aload pop
-					exch _kkey 5 index exch get % left glyph
-					exch _kkey 5 index exch get % right glyph
+					exch hash 5 index exch get % left glyph
+					exch hash 5 index exch get % right glyph
 					1 index (top) get 1 index (bottom) get gt
 					2 index (bottom) get 2 index (top) get lt
 					and % test both have > 1 row overlap
 					2 index (points) get length 1 gt
 					3 index (points) get length 1 gt
 					and % test both have > 1 row with infill
-					and
-					{
+					and {
 						_kpair
 						5 index 3 1 roll put
 					}{
@@ -315,21 +276,18 @@
 	dup median
 	2 copy mad
 	3 -1 roll
-	1 index 0 eq
-	{
+	1 index 0 eq {
 		dup mean sd exch pop % if zero MAD use standard deviation
 	}{
 		pop
 	} ifelse
 	1 % acceptable # deviations, n
-	3 index
-	{
+	3 index {
 		exch pop
 		dup (mean) get % x
 		dup 5 index sub abs 4 index dup 0 ne { div }{ pop pop 0 } ifelse % abs(x - m) / d
 		3 index le % within n MADs or SDs
-		(kern) exch
-		{
+		(kern) exch {
 			0
 		}{
 			4 index 4 index mul 6 index add % target = nd + m
@@ -350,7 +308,7 @@
 	dup 0 lt { % -ve kern only
 		max % kern limit
 		3 index (rows) get 4 index (height) get div % sample fraction, f
-		-10 mul E exch exp neg 1 add % 1 - e^-10f
+		-10 mul //E exch exp neg 1 add % 1 - e^-10f
 		mul % shift punctuation less
 		3 index (maxkern) get max % limit shift to align rightmost points
 		3 1 roll
@@ -372,8 +330,7 @@
 	5 -1 roll
 	% get pair data
 	_kdata
-	dup length 0 ne
-	{
+	dup length 0 ne {
 		_kchars
 		% get minimum char gap for all pairs
 		dup { exch pop (mingap) get exit } forall
@@ -384,11 +341,9 @@
 		7 2 roll
 		5 -2 roll exch
 		5 1 roll
-		3 -1 roll
-		{
+		3 -1 roll {
 			5 index 5 index 5 index _kscale
-			dup 0 ne
-			{
+			dup 0 ne {
 				2 index { neg } if % flip
 				7 index 3 1 roll put
 			}{
@@ -408,11 +363,9 @@
 % add path for glyph after doing kerning shift
 % <char> <kerns> kcharpath -
 /kcharpath {
-	dup (lastchar) known
-	{
-		dup (lastchar) get 2 index cat _kkey % key
-		1 index 1 index known
-		{
+	dup (lastchar) known {
+		dup (lastchar) get 2 index cat hash % key
+		1 index 1 index known {
 			1 index 1 index get % kern distance
 			dup 0 rmoveto % kern
 			pop
@@ -422,4 +375,3 @@
 	(lastchar) 2 index put
 	true charpath
 } bind def
-
